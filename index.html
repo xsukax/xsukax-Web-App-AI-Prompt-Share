@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xsukax Web App AI Prompt Share</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        .notification {
+            transition: all 0.3s ease;
+        }
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">xsukax Web App AI Prompt Share</h1>
+                </div>
+                <div class="flex space-x-4">
+                    <button id="importBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        Import Config
+                    </button>
+                    <button id="exportBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+                        Export Config
+                    </button>
+                    <button id="shareBtn" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
+                        Generate Shareable URL
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Purpose Input -->
+        <section class="mb-8">
+            <label for="purpose" class="block text-sm font-medium text-gray-700 mb-2">Main Purpose of Your Web App</label>
+            <textarea 
+                id="purpose" 
+                rows="3" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Describe the main purpose of your web application..."
+            ></textarea>
+        </section>
+
+        <!-- Checklist -->
+        <section class="mb-8">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Development Guidelines & Constraints</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Checklist items will be dynamically generated here -->
+            </div>
+        </section>
+
+        <!-- Generated Prompt -->
+        <section class="mb-8">
+            <div class="flex justify-between items-center mb-2">
+                <label for="generatedPrompt" class="block text-sm font-medium text-gray-700">Generated Prompt</label>
+                <button id="copyBtn" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    Copy to Clipboard
+                </button>
+            </div>
+            <textarea 
+                id="generatedPrompt" 
+                rows="8" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                readonly
+                placeholder="Your generated prompt will appear here..."
+            ></textarea>
+        </section>
+    </main>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Import Configuration</h3>
+            </div>
+            <div class="px-6 py-4">
+                <textarea 
+                    id="importJson" 
+                    rows="6" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-4"
+                    placeholder="Paste your JSON configuration here..."
+                ></textarea>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancelImport" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                        Cancel
+                    </button>
+                    <button id="confirmImport" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        Import
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Export Configuration</h3>
+            </div>
+            <div class="px-6 py-4">
+                <textarea 
+                    id="exportJson" 
+                    rows="8" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-4 font-mono text-sm"
+                    readonly
+                ></textarea>
+                <div class="flex justify-end space-x-3">
+                    <button id="copyJson" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                        Copy JSON
+                    </button>
+                    <button id="closeExport" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Generate Shareable URL</h3>
+            </div>
+            <div class="px-6 py-4">
+                <div class="mb-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="encryptionType" value="base64" class="form-radio text-blue-600" checked>
+                        <span class="ml-2">Base64 Encoded URL</span>
+                    </label>
+                    <label class="inline-flex items-center ml-6">
+                        <input type="radio" name="encryptionType" value="aes" class="form-radio text-blue-600">
+                        <span class="ml-2">AES-256 Encrypted URL (with password)</span>
+                    </label>
+                </div>
+                <div id="passwordSection" class="mb-4 hidden">
+                    <label for="sharePassword" class="block text-sm font-medium text-gray-700 mb-1">Encryption Password</label>
+                    <input 
+                        type="password" 
+                        id="sharePassword" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter password for encryption"
+                    >
+                </div>
+                <div class="mb-4">
+                    <label for="shareUrl" class="block text-sm font-medium text-gray-700 mb-1">Shareable URL</label>
+                    <input 
+                        type="text" 
+                        id="shareUrl" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-gray-50 font-mono text-sm"
+                        readonly
+                    >
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancelShare" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                        Cancel
+                    </button>
+                    <button id="generateUrl" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
+                        Generate URL
+                    </button>
+                    <button id="copyUrl" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors hidden">
+                        Copy URL
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Container -->
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script>
+        // Checklist configuration - easy to locate and modify
+        const checklistItems = [
+            { id: 1, text: "Use SVG tags for icons and graphics", checked: false },
+            { id: 2, text: "Avoid SVG tags entirely", checked: false },
+            { id: 3, text: "Ensure responsive design across common devices", checked: true },
+            { id: 4, text: "Use Tailwind CSS for styling", checked: true },
+            { id: 5, text: "Implement dark mode toggle", checked: false },
+            { id: 6, text: "Use localStorage for data persistence", checked: false },
+            { id: 7, text: "Implement service worker for caching", checked: false },
+            { id: 8, text: "Use modern ES6+ JavaScript features", checked: true },
+            { id: 9, text: "Implement accessibility features (ARIA)", checked: false },
+            { id: 10, text: "Optimize for performance", checked: true },
+            { id: 11, text: "Use semantic HTML elements", checked: true },
+            { id: 12, text: "Implement error boundaries", checked: false },
+            { id: 13, text: "Use TypeScript instead of JavaScript", checked: false },
+            { id: 14, text: "Implement progressive web app features", checked: false },
+            { id: 15, text: "Use React hooks for state management", checked: false },
+            { id: 16, text: "Implement client-side routing", checked: false },
+            { id: 17, text: "Use GraphQL instead of REST API", checked: false },
+            { id: 18, text: "Implement real-time updates with WebSockets", checked: false },
+            { id: 19, text: "Use CSS Grid for layout", checked: false },
+            { id: 20, text: "Use Flexbox for component alignment", checked: false },
+            { id: 21, text: "Implement form validation", checked: false },
+            { id: 22, text: "Use lazy loading for images", checked: true },
+            { id: 23, text: "Implement infinite scrolling", checked: false },
+            { id: 24, text: "Use Web Workers for heavy computations", checked: false },
+            { id: 25, text: "Implement drag and drop functionality", checked: false },
+            { id: 26, text: "Use WebGL for 3D graphics", checked: false },
+            { id: 27, text: "Implement keyboard shortcuts", checked: false },
+            { id: 28, text: "Use JWT for authentication", checked: false },
+            { id: 29, text: "Implement server-side rendering", checked: false },
+            { id: 30, text: "Use Docker for containerization", checked: false },
+			{ id: 31, text: "Replace alert popups with CSS-based modal dialogs", checked: true },
+			{ id: 32, text: "Add Documentation button to open CSS Modal explaining the app", checked: false },
+			{ id: 33, text: "Display overlay notifications at the top-right corner", checked: true }
+        ];
+
+        // DOM Elements
+        const purposeInput = document.getElementById('purpose');
+        const checklistContainer = document.querySelector('.grid');
+        const generatedPrompt = document.getElementById('generatedPrompt');
+        const copyBtn = document.getElementById('copyBtn');
+        
+        // Modal Elements
+        const importModal = document.getElementById('importModal');
+        const exportModal = document.getElementById('exportModal');
+        const shareModal = document.getElementById('shareModal');
+        const importBtn = document.getElementById('importBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        const cancelImport = document.getElementById('cancelImport');
+        const confirmImport = document.getElementById('confirmImport');
+        const closeExport = document.getElementById('closeExport');
+        const copyJson = document.getElementById('copyJson');
+        const cancelShare = document.getElementById('cancelShare');
+        const generateUrl = document.getElementById('generateUrl');
+        const copyUrl = document.getElementById('copyUrl');
+        const importJson = document.getElementById('importJson');
+        const exportJson = document.getElementById('exportJson');
+        const shareUrl = document.getElementById('shareUrl');
+        const passwordSection = document.getElementById('passwordSection');
+        const sharePassword = document.getElementById('sharePassword');
+        const encryptionTypeRadios = document.querySelectorAll('input[name="encryptionType"]');
+
+        // Initialize the checklist
+        function initializeChecklist() {
+            checklistContainer.innerHTML = '';
+            checklistItems.forEach(item => {
+                const checklistItem = document.createElement('div');
+                checklistItem.className = 'flex items-start';
+                checklistItem.innerHTML = `
+                    <div class="flex items-center h-5">
+                        <input 
+                            id="checklist-${item.id}" 
+                            type="checkbox" 
+                            class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                            ${item.checked ? 'checked' : ''}
+                        >
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="checklist-${item.id}" class="font-medium text-gray-700">${item.text}</label>
+                    </div>
+                `;
+                checklistContainer.appendChild(checklistItem);
+                
+                // Add event listener to update the state
+                const checkbox = checklistItem.querySelector('input');
+                checkbox.addEventListener('change', () => {
+                    item.checked = checkbox.checked;
+                    updateGeneratedPrompt();
+                });
+            });
+        }
+
+        // Update the generated prompt based on inputs
+        function updateGeneratedPrompt() {
+            const purpose = purposeInput.value.trim();
+            const selectedItems = checklistItems.filter(item => item.checked).map(item => item.text);
+            
+            let prompt = '';
+            
+            if (purpose) {
+                prompt += `Main Purpose: ${purpose}\n\n`;
+            }
+            
+            if (selectedItems.length > 0) {
+                prompt += 'Constraints and Guidelines:\n';
+                selectedItems.forEach(item => {
+                    prompt += `- ${item}\n`;
+                });
+            }
+            
+            generatedPrompt.value = prompt;
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notifications = document.getElementById('notifications');
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-blue-500';
+            
+            notification.className = `${bgColor} text-white px-4 py-2 rounded-md shadow-md notification`;
+            notification.textContent = message;
+            
+            notifications.appendChild(notification);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    notifications.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Export configuration as JSON
+        function exportConfiguration() {
+            const config = {
+                purpose: purposeInput.value,
+                checklist: checklistItems
+            };
+            
+            exportJson.value = JSON.stringify(config, null, 2);
+            exportModal.classList.remove('hidden');
+        }
+
+        // Import configuration from JSON
+        function importConfiguration() {
+            try {
+                const config = JSON.parse(importJson.value);
+                
+                if (config.purpose !== undefined) {
+                    purposeInput.value = config.purpose;
+                }
+                
+                if (Array.isArray(config.checklist)) {
+                    config.checklist.forEach(importedItem => {
+                        const existingItem = checklistItems.find(item => item.id === importedItem.id);
+                        if (existingItem) {
+                            existingItem.checked = importedItem.checked;
+                        }
+                    });
+                    
+                    // Reinitialize checklist with new values
+                    initializeChecklist();
+                    updateGeneratedPrompt();
+                    
+                    importModal.classList.add('hidden');
+                    importJson.value = '';
+                    showNotification('Configuration imported successfully!', 'success');
+                } else {
+                    showNotification('Invalid configuration format');
+                }
+            } catch (error) {
+                showNotification('Invalid JSON format');
+            }
+        }
+
+        // Generate shareable URL
+        function generateShareableUrl() {
+            const config = {
+                purpose: purposeInput.value,
+                checklist: checklistItems
+            };
+            
+            const encryptionType = document.querySelector('input[name="encryptionType"]:checked').value;
+            let url = window.location.href.split('?')[0]; // Current URL without query params
+            
+            if (encryptionType === 'base64') {
+                // Base64 encoding
+                const encoded = btoa(JSON.stringify(config));
+                url += `?config=${encoded}`;
+            } else {
+                // AES-256 encryption
+                const password = sharePassword.value;
+                if (!password) {
+                    showNotification('Please enter a password for encryption');
+                    return;
+                }
+                
+                const encrypted = CryptoJS.AES.encrypt(JSON.stringify(config), password).toString();
+                const encoded = btoa(encrypted);
+                url += `?encrypted=${encoded}`;
+            }
+            
+            shareUrl.value = url;
+            copyUrl.classList.remove('hidden');
+        }
+
+        // Load configuration from URL
+        function loadFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const configParam = urlParams.get('config');
+            const encryptedParam = urlParams.get('encrypted');
+            
+            if (configParam) {
+                // Base64 decoding
+                try {
+                    const decoded = atob(configParam);
+                    const config = JSON.parse(decoded);
+                    applyConfig(config);
+                    showNotification('Configuration loaded from URL!', 'success');
+                } catch (error) {
+                    console.error('Error loading configuration from URL:', error);
+                }
+            } else if (encryptedParam) {
+                // AES decryption - prompt for password
+                const password = prompt('This URL contains encrypted configuration. Please enter the password to decrypt:');
+                if (password) {
+                    try {
+                        const decoded = atob(encryptedParam);
+                        const decrypted = CryptoJS.AES.decrypt(decoded, password).toString(CryptoJS.enc.Utf8);
+                        
+                        if (decrypted) {
+                            const config = JSON.parse(decrypted);
+                            applyConfig(config);
+                            showNotification('Configuration loaded from encrypted URL!', 'success');
+                        } else {
+                            showNotification('Invalid password or corrupted data');
+                        }
+                    } catch (error) {
+                        console.error('Error decrypting configuration:', error);
+                        showNotification('Error decrypting configuration');
+                    }
+                }
+            }
+        }
+
+        // Apply configuration to the UI
+        function applyConfig(config) {
+            if (config.purpose !== undefined) {
+                purposeInput.value = config.purpose;
+            }
+            
+            if (Array.isArray(config.checklist)) {
+                config.checklist.forEach(importedItem => {
+                    const existingItem = checklistItems.find(item => item.id === importedItem.id);
+                    if (existingItem) {
+                        existingItem.checked = importedItem.checked;
+                    }
+                });
+                
+                // Reinitialize checklist with new values
+                initializeChecklist();
+                updateGeneratedPrompt();
+            }
+        }
+
+        // Event Listeners
+        purposeInput.addEventListener('input', updateGeneratedPrompt);
+        
+        copyBtn.addEventListener('click', () => {
+            generatedPrompt.select();
+            document.execCommand('copy');
+            showNotification('Prompt copied to clipboard!', 'success');
+        });
+        
+        importBtn.addEventListener('click', () => {
+            importModal.classList.remove('hidden');
+        });
+        
+        exportBtn.addEventListener('click', exportConfiguration);
+        
+        shareBtn.addEventListener('click', () => {
+            shareModal.classList.remove('hidden');
+            shareUrl.value = '';
+            copyUrl.classList.add('hidden');
+            sharePassword.value = '';
+        });
+        
+        cancelImport.addEventListener('click', () => {
+            importModal.classList.add('hidden');
+            importJson.value = '';
+        });
+        
+        confirmImport.addEventListener('click', importConfiguration);
+        
+        closeExport.addEventListener('click', () => {
+            exportModal.classList.add('hidden');
+        });
+        
+        copyJson.addEventListener('click', () => {
+            exportJson.select();
+            document.execCommand('copy');
+            showNotification('JSON copied to clipboard!', 'success');
+        });
+        
+        cancelShare.addEventListener('click', () => {
+            shareModal.classList.add('hidden');
+        });
+        
+        generateUrl.addEventListener('click', generateShareableUrl);
+        
+        copyUrl.addEventListener('click', () => {
+            shareUrl.select();
+            document.execCommand('copy');
+            showNotification('URL copied to clipboard!', 'success');
+        });
+        
+        // Toggle password section based on encryption type
+        encryptionTypeRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.value === 'aes') {
+                    passwordSection.classList.remove('hidden');
+                } else {
+                    passwordSection.classList.add('hidden');
+                }
+            });
+        });
+        
+        // Close modals when clicking outside
+        [importModal, exportModal, shareModal].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                }
+            });
+        });
+
+        // Initialize the application
+        initializeChecklist();
+        updateGeneratedPrompt();
+        loadFromUrl();
+    </script>
+</body>
+</html>
