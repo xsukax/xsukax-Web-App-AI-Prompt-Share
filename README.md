@@ -1,5 +1,10 @@
 # xsukax Web App AI Prompt Share
 
+![License](https://img.shields.io/badge/license-GPL--3.0-blue)
+![JavaScript](https://img.shields.io/badge/javascript-ES6+-yellow)
+![No Dependencies](https://img.shields.io/badge/dependencies-none-green)
+![Privacy First](https://img.shields.io/badge/privacy-first-brightgreen)
+
 A privacy-focused, client-side web application for generating, managing, and sharing AI prompt configurations for web development projects. Built entirely with vanilla JavaScript, this tool enables developers to create structured prompts with customizable constraints and guidelines, then share them securely via encrypted or encoded URLs.
 
 🔗 **Live Demo**: [https://xsukax.github.io/xsukax-Web-App-AI-Prompt-Share/](https://xsukax.github.io/xsukax-Web-App-AI-Prompt-Share/)
